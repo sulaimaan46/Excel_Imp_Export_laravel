@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ExcelDataController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,8 +19,12 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/file-upload', [ExcelDataController::class, 'index']);
+Route::get('/file-upload', [ExcelDataController::class, 'index'])->name('file_upload');
 
 Route::post('file-upload', [ExcelDataController::class, 'fileUploadPost'])->name('file.upload.post');
 
-Route::get('/file_read/{type}', [ExcelDataController::class, 'showXLSX']);
+Route::get('/file_read/{type}/{header}', [ExcelDataController::class, 'fileExport']);
+
+Auth::routes();
+
+Route::get('/home', [HomeController::class, 'index'])->name('home');

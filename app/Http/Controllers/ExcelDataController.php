@@ -32,7 +32,7 @@ class ExcelDataController extends Controller
     {
         $recordData = $this->exceldata->orderBy('created_at', 'DESC')->paginate(15);
 
-        return view('home',compact('recordData'));
+        return view('file_upload',compact('recordData'));
 
     }
 
@@ -45,7 +45,9 @@ class ExcelDataController extends Controller
     {
         ini_set('max_execution_time', 1000);
 
-        $fileType= $request->file->extension();
+        $header = $request->header;
+
+        $fileType= $request->file->getClientOriginalExtension();
 
         $fileName = time().'.'.$fileType;
 
@@ -55,24 +57,50 @@ class ExcelDataController extends Controller
 
         if($fileType == "xlsx" || $fileType == "csv"){
 
-            if($fileType == "csv"){
+            if($fileType == "csv" && $header == 'header'){
 
-                (new FastExcel)->configureCsv(';', '#', 'gbk')->import($fileData);
+                (new FastExcel)->import($fileData, function ($reader) {
+
+                    $data=str_ireplace(str_split('\\/:*?"<>|-,%$@!}{][`~;®™#'), ' ', $reader);
+
+                    return $this->exceldata->insert($data);
+                });
+
+            }else{
+
+                (new FastExcel)->withoutHeaders()->import($fileData, function ($reader) {
+
+                    $data=str_ireplace(str_split('\\/:*?"<>|-,%$@!}{][`_~;®™#'), ' ', $reader);
+
+                    return $this->exceldata->insert($data);
+                });
 
             }
 
-            (new FastExcel)->import($fileData, function ($reader) {
+            if($header == 'header'){
+                (new FastExcel)->import($fileData, function ($reader){
 
-                return $this->exceldata->create([
-                    'first_name' => $reader['First_Name'],
-                    'last_name' => $reader['Last_Name'],
-                    'age' => $reader['Age'],
-                ]);
-            });
+                    $data= array_keys($reader);
+
+                        return $this->exceldata->insert([
+                            'first_name' => $reader[$data[0]],
+                            'last_name' => $reader[$data[1]],
+                            'age' => $reader[$data[2]],
+                        ]);
+                });
+            }else{
+
+                (new FastExcel)->withoutHeaders()->import($fileData, function ($reader){
+                    return $this->exceldata->insert($reader);
+                });
+
+            }
+
+
 
         }else{
 
-            Excel::import(new ExcelDataImport,$fileData);
+            Excel::import(new ExcelDataImport($request->header),$fileData);
 
         }
 
@@ -97,20 +125,28 @@ class ExcelDataController extends Controller
      * @param  \App\Models\ExcelData  $excelData
      * @return \Illuminate\Http\Response
      */
-    public function showXLSX($type,ExcelData $excelData)
+    public function fileExport($type,$header,ExcelData $excelData)
     {
 
         ini_set('max_execution_time', 1000);
 
         if($type == 'xlsx'){
-            return (new FastExcel($excelData::all()))->download('file.xlsx');
+
+            if($header == 'header'){
+                return (new FastExcel($excelData::all()))->download('file.xlsx');
+            }else{
+                return Excel::download(new ExcelDataExport($header), 'file.xlsx');
+            }
         }
         if($type == 'xls'){
-            return Excel::download(new ExcelDataExport, 'file.xls');
+
+            return Excel::download(new ExcelDataExport($header), 'file.xls');
         }
         if($type == 'csv'){
+
             $data = $this->exceldata->orderBy('created_at', 'DESC')->get();
-            (new FastExcel($data))->download('file.csv');
+
+            return (new FastExcel($data))->download('file.csv');
         }
     }
 
