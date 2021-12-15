@@ -8,6 +8,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script></head>
 
+    <script>
+
+        $(document).ready(function(){
+            setTimeout(() => {
+                $('.alert').hide();
+            }, 2000);
+        })
+
+    </script>
+
 <body>
 <div class="container">
 
@@ -42,7 +52,7 @@
                 </div>
 
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="header" id="inlineRadio1" value="header">
+                    <input class="form-check-input" type="radio" name="header" id="inlineRadio1" value="header" required>
                     <label class="form-check-label" for="inlineRadio1">With Header</label>
                   </div>
                   <div class="form-check form-check-inline">
@@ -56,13 +66,13 @@
                         <button type="submit" class="btn btn-success">Upload</button>
                     </div>
                   </div>
-
-
         </form>
+    <br><a href="{{ route('file_upload_new_value') }}" class="btn btn-primary text-sm text-gray-700 dark:text-gray-500 underline">Upload new value</a>
 
       </div>
     </div>
     <br><br>
+
     <div class="row">
 
         <div class="col-md-3">

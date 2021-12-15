@@ -9,7 +9,12 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ExcelDataExport;
 use App\Imports\ExcelDataImport;
 use App\Http\Requests\ExcelDataRequest;
-
+use App\Jobs\ExcelDataProcess;
+use App\Jobs\ExcelDataUpdateProcess;
+use Illuminate\Bus\Batchable;
+use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 
 class ExcelDataController extends Controller
 {
@@ -45,7 +50,11 @@ class ExcelDataController extends Controller
     {
         ini_set('max_execution_time', 1000);
 
-        $header = $request->header;
+        if($request->header){
+            $header = $request->header;
+        }else{
+            $header = null;
+        }
 
         $fileType= $request->file->getClientOriginalExtension();
 
@@ -55,54 +64,15 @@ class ExcelDataController extends Controller
 
         $fileData = public_path('uploads/').$fileName;
 
-        if($fileType == "xlsx" || $fileType == "csv"){
 
-            if($fileType == "csv" && $header == 'header'){
+        $batch = Bus::batch([
 
-                (new FastExcel)->import($fileData, function ($reader) {
+            new ExcelDataProcess($fileType,$fileData,$header),
 
-                    $data=str_ireplace(str_split('\\/:*?"<>|-,%$@!}{][`~;®™#'), ' ', $reader);
+        ])->dispatch();
 
-                    return $this->exceldata->insert($data);
-                });
+        // ExcelDataProcess::dispatch();
 
-            }else{
-
-                (new FastExcel)->withoutHeaders()->import($fileData, function ($reader) {
-
-                    $data=str_ireplace(str_split('\\/:*?"<>|-,%$@!}{][`_~;®™#'), ' ', $reader);
-
-                    return $this->exceldata->insert($data);
-                });
-
-            }
-
-            if($header == 'header'){
-                (new FastExcel)->import($fileData, function ($reader){
-
-                    $data= array_keys($reader);
-
-                        return $this->exceldata->insert([
-                            'first_name' => $reader[$data[0]],
-                            'last_name' => $reader[$data[1]],
-                            'age' => $reader[$data[2]],
-                        ]);
-                });
-            }else{
-
-                (new FastExcel)->withoutHeaders()->import($fileData, function ($reader){
-                    return $this->exceldata->insert($reader);
-                });
-
-            }
-
-
-
-        }else{
-
-            Excel::import(new ExcelDataImport($request->header),$fileData);
-
-        }
 
         return back()->with('success','You have successfully upload file.');
 
@@ -114,9 +84,9 @@ class ExcelDataController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function show(Request $request)
     {
-        //
+        return view('new_value_upload');
     }
 
     /**
@@ -169,9 +139,34 @@ class ExcelDataController extends Controller
      * @param  \App\Models\ExcelData  $excelData
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, ExcelData $excelData)
+    public function update(ExcelDataRequest $request)
     {
-        //
+        ini_set('max_execution_time', 1000);
+
+        if($request->header){
+            $header = $request->header;
+
+        }else{
+            $header = null;
+        }
+
+        $fileType= $request->file->getClientOriginalExtension();
+
+        $fileName = time().'.'.$fileType;
+
+        $request->file->move(public_path('uploads'), $fileName);
+
+        $fileData = public_path('uploads/').$fileName;
+
+        $batch = Bus::batch([
+
+            new ExcelDataUpdateProcess($fileType,$fileData,$header),
+
+        ])->dispatch();
+        
+        return back()->with('success','You have successfully upload file.');
+
+
     }
 
     /**

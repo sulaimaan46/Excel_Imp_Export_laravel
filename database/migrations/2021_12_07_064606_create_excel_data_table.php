@@ -18,6 +18,7 @@ class CreateExcelDataTable extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->integer('age');
+            $table->integer('marks')->nullable();
             $table->timestamps();
         });
     }

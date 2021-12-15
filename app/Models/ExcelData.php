@@ -13,5 +13,7 @@ class ExcelData extends Model
         'first_name',
         'last_name',
         'age',
+        'marks',
     ];
+    protected $hidden = ['created_at','updated_at'];
 }

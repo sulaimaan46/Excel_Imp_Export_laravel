@@ -20,6 +20,7 @@ class ExcelDataImport implements ToModel,WithHeadingRow
     */
     public function model(array $row)
     {
+
         $header = $this->header;
         if($header == "header"){
 
