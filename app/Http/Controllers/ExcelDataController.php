@@ -127,9 +127,34 @@ class ExcelDataController extends Controller
      * @param  \App\Models\ExcelData  $excelData
      * @return \Illuminate\Http\Response
      */
-    public function edit(ExcelData $excelData)
+    public function excelDataUploadAjax(Request $request)
     {
-        //
+        // dd($request->all());
+
+        ini_set('max_execution_time', 1000);
+
+        if($request->header){
+            $header = $request->header;
+        }else{
+            $header = null;
+        }
+
+        $fileType= $request->file->getClientOriginalExtension();
+
+        $fileName = time().'.'.$fileType;
+
+        $request->file->move(public_path('uploads'), $fileName);
+
+        $fileData = public_path('uploads/').$fileName;
+
+        $batch = Bus::batch([
+
+            new ExcelDataProcess($fileType,$fileData,$header),
+
+        ])->dispatch();
+
+        return response()->json(['sucess'=>true , 'message'=> "File was Imported Sucessfully"]);
+
     }
 
     /**
@@ -163,7 +188,7 @@ class ExcelDataController extends Controller
             new ExcelDataUpdateProcess($fileType,$fileData,$header),
 
         ])->dispatch();
-        
+
         return back()->with('success','You have successfully upload file.');
 
 

@@ -27,6 +27,7 @@ Route::post('file-upload', [ExcelDataController::class, 'fileUploadPost'])->name
 
 Route::post('file-upload-new-value', [ExcelDataController::class, 'update'])->name('file.upload.new_value');
 
+Route::post('excel-data', [ExcelDataController::class, 'excelDataUploadAjax']);
 
 Route::get('/file_read/{type}/{header}', [ExcelDataController::class, 'fileExport']);
 
